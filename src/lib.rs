@@ -25,7 +25,7 @@
 //! let points = wind_mouse.generate_points(start, end);
 //! ```
 
-use rand::prelude::*;
+use rand::{prelude::*, random, rng};
 use thiserror::Error;
 
 #[derive(Debug, Error)]
@@ -98,13 +98,28 @@ pub struct WindMouse {
 
 impl WindMouse {
     /// Creates a new WindMouse instance with the specified parameters
-    pub fn new(mouse_speed: f32, gravity: f32, wind: f32, min_wait: f32, max_wait: f32, max_step: f32, target_area: f32) -> Result<Self, WindMouseError> {
+    pub fn new(
+        mouse_speed: f32,
+        gravity: f32,
+        wind: f32,
+        min_wait: f32,
+        max_wait: f32,
+        max_step: f32,
+        target_area: f32,
+    ) -> Result<Self, WindMouseError> {
         if min_wait > max_wait {
             return Err(WindMouseError::InvalidWaitTime { min_wait, max_wait });
         }
 
-        for &(value, name) in &[(mouse_speed, "mouse_speed"), (gravity, "gravity"), (wind, "wind"),
-            (min_wait, "min_wait"), (max_wait, "max_wait"), (max_step, "max_step"), (target_area, "target_area")] {
+        for &(value, name) in &[
+            (mouse_speed, "mouse_speed"),
+            (gravity, "gravity"),
+            (wind, "wind"),
+            (min_wait, "min_wait"),
+            (max_wait, "max_wait"),
+            (max_step, "max_step"),
+            (target_area, "target_area"),
+        ] {
             if value < 0.0 {
                 return Err(WindMouseError::NegativeParameter(name));
             }
@@ -144,13 +159,14 @@ impl WindMouse {
     /// * `max_step`: 10.0
     /// * `target_area`: 100.0
     pub fn new_default() -> Self {
-        Self::new(10.0, 9.0, 3.0, 2.0, 10.0, 10.0, 100.0).expect("Default values should always be valid")
+        Self::new(10.0, 9.0, 3.0, 2.0, 10.0, 10.0, 100.0)
+            .expect("Default values should always be valid")
     }
 
     /// Generates a series of points representing the mouse movement path
     /// from the start coordinate to the end coordinate
     pub fn generate_points(&self, start: Coordinate, end: Coordinate) -> Vec<[i32; 3]> {
-        let mut rng = thread_rng();
+        let mut rng = rng();
         let mut current = start;
         let mut wind_x = rng.random::<f32>() * 10.0;
         let mut wind_y = rng.random::<f32>() * 10.0;
@@ -210,7 +226,10 @@ impl WindMouse {
             current_wait += wait;
 
             // Add point to the list if it's different from the previous one
-            let new = Coordinate { x: current.x.round(), y: current.y.round() };
+            let new = Coordinate {
+                x: current.x.round(),
+                y: current.y.round(),
+            };
             if new.as_i32() != old.as_i32() {
                 points.push([new.as_i32()[0], new.as_i32()[1], current_wait]);
             }
@@ -266,3 +285,4 @@ mod tests {
         assert_eq!(points.last().unwrap()[0..2], [100, 100]);
     }
 }
+
